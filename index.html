@@ -3,87 +3,553 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Link Organizer with Previews</title>
+<title>Link Organizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #f7f8fc; --surface: #ffffff; --surface-2: #f1f3f9; --border: #e6e8f0;
     --text: #1a1f36; --text-muted: #6b7194; --accent: #6366f1; --accent-hover: #4f46e5;
     --accent-soft: #eef2ff; --danger: #ef4444; --danger-soft: #fef2f2;
-    --success: #10b981; --warning: #f59e0b; --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
-    --shadow: 0 4px 12px rgba(15,23,42,.08); --shadow-lg: 0 20px 40px rgba(15,23,42,.12);
+    --success: #10b981; --warning: #f59e0b;
   }
   html, body { height: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
   .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
   .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
   .logo { display: flex; align-items: center; gap: 10px; padding: 6px 8px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-  .logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; box-shadow: 0 4px 12px rgba(99,102,241,.35); }
+  .logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; }
   .logo-text { font-weight: 700; font-size: 16px; }
   .logo-sub { font-size: 11px; color: var(--text-muted); }
   .sync-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); padding: 6px 10px; background: var(--surface-2); border-radius: 8px; margin-bottom: 16px; }
-  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse-dot 2s ease infinite; }
-  .sync-dot.offline { background: var(--warning); animation: none; }
-  .sync-dot.error { background: var(--danger); animation: none; }
-  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+  .sync-dot.offline { background: var(--warning); }
   .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); padding: 0 10px; margin: 18px 0 10px; font-weight: 600; }
   .filter-list { list-style: none; }
   .filter-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text); transition: all .15s ease; margin-bottom: 2px; }
   .filter-item:hover { background: var(--surface-2); }
   .filter-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
   .filter-item .count { margin-left: auto; background: var(--surface-2); color: var(--text-muted); font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-  .filter-item.active .count { background: white; color: var(--accent); }
   .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .sidebar-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .15s ease; font-family: inherit; }
-  .btn-primary { background: var(--accent); color: white; width: 100%; box-shadow: 0 4px 12px rgba(99,102,241,.3); }
-  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: white; width: 100%; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
   .btn-ghost { background: transparent; color: var(--text); width: 100%; justify-content: flex-start; }
   .btn-ghost:hover { background: var(--surface-2); }
-  .btn-danger { color: var(--danger); }
-  .btn-danger:hover { background: var(--danger-soft); }
   .main { display: flex; flex-direction: column; min-width: 0; }
   .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; }
   .search-box { flex: 1; max-width: 480px; position: relative; }
-  .search-box input { width: 100%; padding: 10px 14px 10px 40px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--surface-2); outline: none; transition: all .15s; font-family: inherit; }
-  .search-box input:focus { background: white; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+  .search-box input { width: 100%; padding: 10px 14px 10px 40px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--surface-2); outline: none; font-family: inherit; }
   .search-box svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-  .topbar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
-  .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); transition: all .15s; }
-  .icon-btn:hover { background: var(--surface-2); }
   .content { padding: 28px; flex: 1; }
   .content-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; }
   .content-title { font-size: 22px; font-weight: 700; }
   .content-sub { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
-  .quick-add { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm); }
+  .quick-add { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
   .quick-add-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .quick-add input { flex: 1; border: none; outline: none; font-size: 15px; background: transparent; font-family: inherit; color: var(--text); }
-  .quick-add input::placeholder { color: var(--text-muted); }
-  .quick-add-btn { padding: 10px 20px; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; font-family: inherit; white-space: nowrap; }
+  .quick-add-btn { padding: 10px 20px; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; }
   .quick-add-btn:hover { background: var(--accent-hover); }
   .quick-add-btn:disabled { opacity: .5; cursor: not-allowed; }
-  .quick-add-btn.loading { background: var(--surface-2); color: var(--text-muted); }
-  .quick-add-status { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; min-width: 140px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 32px; padding: 20px 10px; }
+  .card { position: relative; background: var(--surface); border-radius: 18px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,.1); border-color: var(--accent); }
+  .card-preview { width: 100%; height: 200px; background: var(--surface-2); overflow: hidden; }
+  .card-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 5px; opacity: 0; transition: opacity .2s; }
+  .card:hover .card-actions { opacity: 1; }
+  .card-action-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,.95); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); backdrop-filter: blur(8px); }
+  .card-action-btn:hover { background: white; transform: scale(1.08); }
+  .card-body { padding: 16px; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-url { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding-top: 12px; border-top: 1px solid var(--border); margin-top: 12px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--surface-2); }
+  .empty { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity .2s ease; padding: 20px; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: white; border-radius: 18px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform .25s ease; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: var(--surface-2); }
+  .modal-body { padding: 24px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .field input, .field textarea, .field select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; background: white; }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-secondary { background: var(--surface-2); color: var(--text); }
+  .btn-secondary:hover { background: #e5e7f0; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text); color: white; padding: 12px 20px; border-radius: 12px; font-size: 14px; z-index: 200; transition: transform .25s ease; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
   .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 32px; padding: 20px 10px; }
-  .card { position: relative; perspective: 1200px; animation: fadeUp .4s ease both; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-  .card-inner { position: relative; background: var(--surface); border-radius: 18px; border: 1px solid var(--border); overflow: visible; cursor: pointer; transition: transform .4s cubic-bezier(0.03, 0.98, 0.52, 0.99), box-shadow .4s ease; }
-  .card-inner:hover { box-shadow: 0 30px 60px -15px rgba(99,102,241,.25); border-color: var(--accent); }
-  .card-preview-wrap { position: relative; width: 100%; height: 220px; display: flex; align-items: center; justify-content: center; padding: 20px 20px 0; }
-  .card-preview { position: relative; width: 100%; height: 200px; transition: transform .5s cubic-bezier(0.03, 0.98, 0.52, 0.99); }
-  .card-preview img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 15px; border: 1px solid rgba(0,0,0,.08); box-shadow: 0 20px 40px -10px rgba(0,0,0,.2); }
-  .card-actions { position: absolute; top: 28px; right: 28px; display: flex; gap: 5px; opacity: 0; transition: opacity .2s ease; z-index: 10; background: rgba(255,255,255,.85); backdrop-filter: blur(12px); padding: 4px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
-  .card-inner:hover .card-actions { opacity: 1; }
-  .card-action-btn { width: 30px; height: 30px; border-radius: 7px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); transition: all .15s; }
-  .card-action-btn:hover { background: var(--surface-2); transform: scale(1.08); }
-  .card-action-btn.delete:hover { background: #fef2f2; color: var(--danger); }
-  .card-body { padding: 16px 22px 12px; display: flex; flex-direction: column; gap: 4px; }
-  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-url { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
-  .card-url .favicon { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
-  .card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
-  .card-meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding-top: 12px; border-top: 1px solid var(--border); }
-  .badge { display
+  .sync-steps { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin-top: 16px; font-size: 12px; display: none; }
+  .sync-steps.show { display: block; }
+  .sync-step { display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); }
+  .sync-step.active { color: var(--accent); font-weight: 600; }
+  .sync-step.done { color: var(--success); }
+  .sync-step-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+  .btn-unsync { background: var(--danger-soft); color: var(--danger); border: 1px solid #fecaca; width: 100%; margin-top: 10px; }
+  .unsync-divider { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .timeout-notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 12px; color: #92400e; display: none; }
+  .timeout-notice.show { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🔗</div>
+      <div><div class="logo-text">Link Organizer</div><div class="logo-sub">Your personal library</div></div>
+    </div>
+    <div class="sync-status" id="syncStatus">
+      <div class="sync-dot" id="syncDot"></div><span id="syncText">Loading...</span>
+    </div>
+    <div class="section-title">Categories</div>
+    <ul class="filter-list" id="categoryList"></ul>
+    <div class="section-title">Quick Filters</div>
+    <ul class="filter-list" id="filterList">
+      <li class="filter-item" data-filter="recent">🕐 Recently Added</li>
+      <li class="filter-item" data-filter="favorites">⭐ Favorites</li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-primary" id="addBtn">➕ Add New Link</button>
+      <div style="margin-top:10px;">
+        <button class="btn btn-ghost" id="cloudSyncBtn">☁️ Cloud Sync Settings</button>
+        <button class="btn btn-ghost" id="exportBtn">📥 Export Backup</button>
+        <button class="btn btn-ghost" id="importBtn">📤 Import Backup</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" />
+      </div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by title, URL, or description..." />
+      </div>
+    </div>
+    <div class="content">
+      <div class="quick-add">
+        <div class="quick-add-icon">🔗</div>
+        <input type="url" id="quickUrl" placeholder="Just paste a link here..." />
+        <button class="quick-add-btn" id="quickAddBtn" disabled><span>Save</span></button>
+      </div>
+      <div class="content-header"><div><h1 class="content-title" id="viewTitle">All Links</h1><div class="content-sub" id="viewSub">Your saved collection</div></div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="modalTitle">Add New Link</div><button class="modal-close" id="closeModal">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Website URL *</label><input type="url" id="urlInput" placeholder="https://example.com" /></div>
+      <div class="field"><label>Title</label><input type="text" id="titleInput" /></div>
+      <div class="field"><label>Category</label><select id="categoryInput"></select></div>
+      <div class="field"><label>Description</label><textarea id="descInput" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="deleteBtn" style="display:none;margin-right:auto;">Delete</button>
+      <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn">Save Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Sync Modal -->
+<div class="modal-overlay" id="cloudModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">☁️ Google Sheets Sync</div><button class="modal-close" id="closeCloudModal">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Sync your links to a Google Sheet for cross-device access.</p>
+      <div class="field">
+        <label>Google Apps Script Web App URL</label>
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." />
+        <div class="error-hint" id="urlError" style="color:var(--danger);font-size:11px;margin-top:4px;display:none;">URL is required</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn btn-secondary" id="testSyncBtn" style="flex:1;">Test Connection</button>
+        <button class="btn btn-primary" id="saveCloudBtn" style="flex:1;">Save & Enable</button>
+      </div>
+      <div class="sync-steps" id="syncSteps">
+        <div class="sync-step" id="step1"><div class="sync-step-icon" id="step1Icon">○</div><span>Testing connection...</span></div>
+        <div class="sync-step" id="step2"><div class="sync-step-icon" id="step2Icon">○</div><span>Pushing links to sheet...</span></div>
+        <div class="sync-step" id="step3"><div class="sync-step-icon" id="step3Icon">○</div><span>Enabling auto-sync...</span></div>
+      </div>
+      <div class="timeout-notice" id="timeoutNotice">⏱️ Request timed out. Check your internet or script URL.</div>
+      <button class="btn btn-secondary" id="cancelSyncBtn" style="display:none;width:100%;margin-top:10px;">Cancel</button>
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+        <div style="font-size:13px; font-weight:600; margin-bottom:8px;">Manual Sync</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" id="pushSyncBtn" style="flex:1;">Push to Sheet</button>
+          <button class="btn btn-secondary" id="pullSyncBtn" style="flex:1;">Pull from Sheet</button>
+        </div>
+      </div>
+      <div class="unsync-divider" id="unsyncSection" style="display:none;">
+        <button class="btn btn-unsync" id="unsyncBtn">Unsync Cloud</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ DATABASE ============
+const DB_NAME = 'LinkOrganizerDB'; const STORE_NAME = 'links';
+function openDB() { return new Promise((resolve, reject) => { const req = indexedDB.open(DB_NAME, 1); req.onerror = () => reject(req.error); req.onsuccess = () => resolve(req.result); req.onupgradeneeded = (e) => { const db = e.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' }); }; }); }
+async function dbGetAll() { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readonly'); const req = tx.objectStore(STORE_NAME).getAll(); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); }); }
+async function dbPut(link) { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).put(link); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
+async function dbDelete(id) { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).delete(id); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
+async function dbClear() { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).clear(); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
+
+// ============ FETCH WITH TIMEOUT ============
+const TIMEOUT = 30000;
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') throw new Error('Request timed out');
+    throw e;
+  }
+}
+
+// ============ CLOUD SYNC ============
+function getCloudConfig() { try { return JSON.parse(localStorage.getItem('cloudConfig') || '{}'); } catch { return {}; } }
+function saveCloudConfig(c) { localStorage.setItem('cloudConfig', JSON.stringify(c)); }
+function clearCloudConfig() { localStorage.removeItem('cloudConfig'); }
+
+async function pushToCloud(showMsg = true) {
+  const cfg = getCloudConfig();
+  if (!cfg.scriptUrl) { if (showMsg) showToast('Configure sync first', 'error'); return false; }
+  try {
+    updateSyncStatus('syncing');
+    const links = await dbGetAll();
+    const data = links.map(l => ({ id: l.id, url: l.url, title: l.title, description: l.description, category: l.category, favorite: l.favorite, date: l.date }));
+    const res = await fetchWithTimeout(cfg.scriptUrl + '?action=write', { method: 'POST', body: JSON.stringify(data) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    updateSyncStatus('synced');
+    if (showMsg) showToast('Pushed to sheet ✓');
+    return true;
+  } catch (e) {
+    updateSyncStatus('error');
+    if (showMsg) showToast('Sync failed: ' + e.message, 'error');
+    return false;
+  }
+}
+
+async function pullFromCloud() {
+  const cfg = getCloudConfig();
+  if (!cfg.scriptUrl) { showToast('Configure sync first', 'error'); return false; }
+  try {
+    updateSyncStatus('syncing');
+    const res = await fetchWithTimeout(cfg.scriptUrl + '?action=read');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const cloudLinks = await res.json();
+    if (!Array.isArray(cloudLinks)) throw new Error('Invalid data');
+    await dbClear();
+    for (const l of cloudLinks) {
+      if (!l.preview) l.preview = 'https://image.thum.io/get/width/800/crop/500/noanimate/' + encodeURIComponent(l.url);
+      await dbPut(l);
+    }
+    links = await dbGetAll();
+    render();
+    updateSyncStatus('synced');
+    showToast('Pulled ' + cloudLinks.length + ' links ✓');
+    return true;
+  } catch (e) {
+    updateSyncStatus('error');
+    showToast('Pull failed: ' + e.message, 'error');
+    return false;
+  }
+}
+
+async function testConnection() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) { showToast('Enter URL first', 'error'); return false; }
+  try {
+    showToast('Testing...');
+    const res = await fetchWithTimeout(url + '?action=read');
+    if (res.ok) { showToast('Connected! ✓'); return true; }
+    else { showToast('Failed: HTTP ' + res.status, 'error'); return false; }
+  } catch (e) { showToast('Failed: ' + e.message, 'error'); return false; }
+}
+
+function updateSyncStatus(status) {
+  const dot = document.getElementById('syncDot'); const txt = document.getElementById('syncText');
+  const cfg = getCloudConfig();
+  if (!cfg.scriptUrl) { dot.className = 'sync-dot offline'; txt.textContent = 'Local only'; return; }
+  if (status === 'syncing') { dot.className = 'sync-dot'; txt.textContent = 'Syncing...'; }
+  else if (status === 'synced') { dot.className = 'sync-dot'; txt.textContent = 'Synced to Sheets'; }
+  else { dot.className = 'sync-dot offline'; txt.textContent = 'Sync error'; }
+}
+
+// ============ DATA ============
+const CATEGORIES = { work: { name: 'Work', color: '#6366f1', icon: '💼' }, research: { name: 'Research', color: '#10b981', icon: '🔬' }, shopping: { name: 'Shopping', color: '#f59e0b', icon: '🛍️' }, entertainment: { name: 'Entertainment', color: '#ef4444', icon: '🎬' }, productivity: { name: 'Productivity', color: '#8b5cf6', icon: '' }, social: { name: 'Social', color: '#3b82f6', icon: '💬' }, news: { name: 'News', color: '#ec4899', icon: '📰' }, education: { name: 'Education', color: '#14b8a6', icon: '📚' }, design: { name: 'Design', color: '#f97316', icon: '🎨' }, finance: { name: 'Finance', color: '#059669', icon: '💰' }, travel: { name: 'Travel', color: '#0ea5e9', icon: '✈️' }, food: { name: 'Food', color: '#dc2626', icon: '🍕' }, health: { name: 'Health', color: '#22c55e', icon: '💊' }, tech: { name: 'Tech', color: '#6366f1', icon: '💻' }, other: { name: 'Other', color: '#6b7280', icon: '🔗' } };
+const DOMAIN_RULES = [ { keys: ['github','gitlab','stackoverflow','vercel','netlify','jira'], cat: 'work', desc: 'Development platform' }, { keys: ['youtube','netflix','spotify','twitch'], cat: 'entertainment', desc: 'Entertainment platform' }, { keys: ['notion','trello','todoist'], cat: 'productivity', desc: 'Productivity tool' }, { keys: ['twitter','facebook','instagram','linkedin','reddit'], cat: 'social', desc: 'Social media' }, { keys: ['amazon','ebay','etsy'], cat: 'shopping', desc: 'Shopping site' } ];
+const KNOWN_TITLES = { 'github.com': 'GitHub', 'medium.com': 'Medium', 'amazon.com': 'Amazon', 'youtube.com': 'YouTube', 'notion.so': 'Notion', 'twitter.com': 'Twitter', 'reddit.com': 'Reddit', 'linkedin.com': 'LinkedIn', 'netflix.com': 'Netflix', 'spotify.com': 'Spotify' };
+
+let links = []; let currentFilter = { type: 'all' }; let searchQuery = ''; let editingId = null; let quickAddData = null; let quickTimer = null; let isSyncing = false;
+
+function extractDomain(url) { try { return new URL(url).hostname.replace('www.',''); } catch { return url; } }
+function autoDetect(url) {
+  const domain = extractDomain(url).toLowerCase(); let cat = 'other'; let desc = ''; let title = '';
+  for (const [k, v] of Object.entries(KNOWN_TITLES)) { if (domain === k || domain.endsWith('.' + k)) { title = v; break; } }
+  if (!title) title = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+  for (const r of DOMAIN_RULES) { if (r.keys.some(k => domain.includes(k))) { cat = r.cat; desc = r.desc; break; } }
+  if (!desc) desc = 'Website at ' + domain;
+  return { title, category: cat, description: desc };
+}
+function getScreenshot(url) { return 'https://image.thum.io/get/width/800/crop/500/noanimate/' + encodeURIComponent(url); }
+function getFavicon(url) { return 'https://www.google.com/s2/favicons?domain=' + extractDomain(url) + '&sz=32'; }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ============ RENDER ============
+function renderCategories() {
+  const list = document.getElementById('categoryList'); const counts = {};
+  links.forEach(l => { counts[l.category] = (counts[l.category] || 0) + 1; });
+  let html = '<li class="filter-item ' + (currentFilter.type === 'all' ? 'active' : '') + '" data-cat="all"> All Links <span class="count">' + links.length + '</span></li>';
+  Object.entries(CATEGORIES).forEach(([k, c]) => { const cnt = counts[k] || 0; if (cnt === 0) return; html += '<li class="filter-item ' + (currentFilter.type === 'category' && currentFilter.value === k ? 'active' : '') + '" data-cat="' + k + '"><span class="cat-dot" style="background:' + c.color + '"></span>' + c.icon + ' ' + c.name + ' <span class="count">' + cnt + '</span></li>'; });
+  list.innerHTML = html;
+  list.querySelectorAll('.filter-item').forEach(el => { el.addEventListener('click', () => { const cat = el.dataset.cat; currentFilter = cat === 'all' ? { type: 'all' } : { type: 'category', value: cat }; render(); }); });
+}
+
+function getFiltered() {
+  let res = [...links];
+  if (currentFilter.type === 'category') res = res.filter(l => l.category === currentFilter.value);
+  else if (currentFilter.type === 'recent') res = res.filter(l => new Date(l.date).getTime() > Date.now() - 86400000 * 7);
+  else if (currentFilter.type === 'favorites') res = res.filter(l => l.favorite);
+  if (searchQuery) { const q = searchQuery.toLowerCase(); res = res.filter(l => l.title.toLowerCase().includes(q) || l.url.toLowerCase().includes(q)); }
+  res.sort((a,b) => new Date(b.date) - new Date(a.date));
+  return res;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid'); const filtered = getFiltered();
+  const titleEl = document.getElementById('viewTitle'); const subEl = document.getElementById('viewSub');
+  if (currentFilter.type === 'all') { titleEl.textContent = 'All Links'; subEl.textContent = links.length + ' saved links'; }
+  else if (currentFilter.type === 'category') { titleEl.textContent = CATEGORIES[currentFilter.value].icon + ' ' + CATEGORIES[currentFilter.value].name; subEl.textContent = filtered.length + ' links'; }
+  else if (currentFilter.type === 'recent') { titleEl.textContent = ' Recently Added'; subEl.textContent = 'Last 7 days'; }
+  else if (currentFilter.type === 'favorites') { titleEl.textContent = '⭐ Favorites'; subEl.textContent = filtered.length + ' links'; }
+  
+  if (filtered.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div style="font-size:48px;margin-bottom:16px;">📭</div><h3>No links yet</h3><p>Paste a link above to get started!</p></div>'; return; }
+  
+  grid.innerHTML = filtered.map((l, i) => {
+    const cat = CATEGORIES[l.category] || CATEGORIES.other; const domain = extractDomain(l.url); const favicon = getFavicon(l.url);
+    const screenshot = l.preview || getScreenshot(l.url);
+    return '<div class="card" data-id="' + l.id + '" style="animation-delay:' + (i * 40) + 'ms;">' +
+      '<div class="card-actions">' +
+        '<button class="card-action-btn" data-action="fav" style="color:' + (l.favorite ? '#f59e0b' : 'inherit') + '">⭐</button>' +
+        '<button class="card-action-btn" data-action="copy">📋</button>' +
+        '<button class="card-action-btn" data-action="open">↗</button>' +
+        '<button class="card-action-btn delete" data-action="delete">🗑</button>' +
+      '</div>' +
+      '<div class="card-preview"><img src="' + screenshot + '" alt="' + escapeHtml(l.title) + '" loading="lazy" onerror="this.src=\'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'500\'><rect width=\'800\' height=\'500\' fill=\'' + cat.color + '\'/><text x=\'400\' y=\'280\' text-anchor=\'middle\' font-size=\'64\' fill=\'white\'>' + cat.icon + '</text></svg>\';"/></div>' +
+      '<div class="card-body">' +
+        '<div class="card-title">' + escapeHtml(l.title) + '</div>' +
+        '<div class="card-url">🌐 ' + escapeHtml(domain) + '</div>' +
+        '<div class="card-desc">' + escapeHtml(l.description) + '</div>' +
+        '<div class="card-meta"><span class="badge"><span class="cat-dot" style="background:' + cat.color + '"></span>' + cat.name + '</span><span>' + new Date(l.date).toLocaleDateString() + '</span></div>' +
+      '</div></div>';
+  }).join('');
+  
+  grid.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (btn) {
+        e.stopPropagation();
+        const id = card.dataset.id; const action = btn.dataset.action;
+        const link = links.find(l => l.id === id);
+        if (action === 'fav') { link.favorite = !link.favorite; dbPut(link).then(() => { links = links.slice(); render(); scheduleSync(); }); }
+        else if (action === 'copy') { navigator.clipboard.writeText(link.url); showToast('Copied!'); }
+        else if (action === 'open') { window.open(link.url, '_blank'); }
+        else if (action === 'delete') { if (confirm('Delete?')) { dbDelete(id).then(() => { links = links.filter(l => l.id !== id); render(); scheduleSync(); }); } }
+        return;
+      }
+      openEditModal(card.dataset.id);
+    });
+  });
+}
+
+function render() { renderCategories(); renderGrid(); }
+
+// ============ MODAL ============
+const modal = document.getElementById('modal');
+function openModal() { modal.classList.add('open'); }
+function closeModal() { modal.classList.remove('open'); editingId = null; }
+function populateCats(sel) { document.getElementById('categoryInput').innerHTML = Object.entries(CATEGORIES).map(([k, c]) => '<option value="' + k + '">' + c.icon + ' ' + c.name + '</option>').join(''); }
+
+function openAddModal() {
+  editingId = null; document.getElementById('modalTitle').textContent = 'Add New Link'; document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('urlInput').value = ''; document.getElementById('titleInput').value = ''; document.getElementById('descInput').value = '';
+  populateCats(); openModal(); setTimeout(() => document.getElementById('urlInput').focus(), 100);
+}
+function openEditModal(id) {
+  const link = links.find(l => l.id === id); if (!link) return; editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Link'; document.getElementById('deleteBtn').style.display = 'inline-flex';
+  document.getElementById('urlInput').value = link.url; document.getElementById('titleInput').value = link.title; document.getElementById('descInput').value = link.description;
+  populateCats(); document.getElementById('categoryInput').value = link.category; openModal();
+}
+
+document.getElementById('addBtn').addEventListener('click', openAddModal);
+document.getElementById('closeModal').addEventListener('click', closeModal);
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+document.getElementById('urlInput').addEventListener('input', e => {
+  clearTimeout(quickTimer); const url = e.target.value.trim(); if (!url) return;
+  let valid = url.startsWith('http') ? url : 'https://' + url;
+  try { new URL(valid); } catch { return; }
+  quickTimer = setTimeout(() => {
+    const d = autoDetect(valid);
+    document.getElementById('titleInput').value = d.title; document.getElementById('categoryInput').value = d.category; document.getElementById('descInput').value = d.description;
+  }, 400);
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  let url = document.getElementById('urlInput').value.trim(); if (!url) { showToast('Enter URL', 'error'); return; }
+  if (!url.startsWith('http')) url = 'https://' + url; try { new URL(url); } catch { showToast('Invalid URL', 'error'); return; }
+  const title = document.getElementById('titleInput').value.trim() || autoDetect(url).title;
+  const category = document.getElementById('categoryInput').value;
+  const description = document.getElementById('descInput').value.trim() || autoDetect(url).description;
+  
+  if (editingId) {
+    const idx = links.findIndex(l => l.id === editingId);
+    if (idx !== -1) { links[idx] = { ...links[idx], url, title, category, description }; await dbPut(links[idx]); links = await dbGetAll(); closeModal(); render(); scheduleSync(); showToast('Updated!'); }
+  } else {
+    if (links.some(l => l.url === url)) { showToast('Already saved', 'warning'); return; }
+    const newLink = { id: 'l_' + Date.now(), url, title, category, description, favorite: false, date: new Date().toISOString(), preview: getScreenshot(url) };
+    await dbPut(newLink); links = await dbGetAll(); closeModal(); render(); scheduleSync(); showToast('Saved!');
+  }
+});
+document.getElementById('deleteBtn').addEventListener('click', async () => { if (editingId && confirm('Delete?')) { await dbDelete(editingId); links = await dbGetAll(); closeModal(); render(); scheduleSync(); } });
+
+// ============ QUICK ADD ============
+const quickUrl = document.getElementById('quickUrl'); const quickBtn = document.getElementById('quickAddBtn');
+quickUrl.addEventListener('input', () => {
+  clearTimeout(quickTimer); const url = quickUrl.value.trim(); quickAddData = null;
+  if (!url) { quickBtn.disabled = true; return; }
+  let valid = url.startsWith('http') ? url : 'https://' + url;
+  try { new URL(valid); } catch { quickBtn.disabled = true; return; }
+  quickBtn.disabled = true; quickBtn.classList.add('loading'); quickBtn.querySelector('span').textContent = 'Analyzing...';
+  quickTimer = setTimeout(() => {
+    const d = autoDetect(valid); quickAddData = { url: valid, title: d.title, category: d.category, description: d.description, preview: getScreenshot(valid) };
+    quickBtn.disabled = false; quickBtn.classList.remove('loading'); quickBtn.querySelector('span').textContent = 'Save';
+  }, 500);
+});
+quickBtn.addEventListener('click', async () => {
+  if (!quickAddData) return; if (links.some(l => l.url === quickAddData.url)) { showToast('Already saved', 'warning'); return; }
+  const newLink = { id: 'l_' + Date.now(), ...quickAddData, favorite: false, date: new Date().toISOString() };
+  await dbPut(newLink); links = await dbGetAll(); render(); scheduleSync();
+  quickUrl.value = ''; quickAddData = null; quickBtn.disabled = true; showToast('Saved!');
+});
+quickUrl.addEventListener('keydown', e => { if (e.key === 'Enter' && quickAddData) quickBtn.click(); });
+
+// ============ CLOUD MODAL ============
+const cloudModal = document.getElementById('cloudModal'); const syncSteps = document.getElementById('syncSteps'); const saveCloudBtn = document.getElementById('saveCloudBtn'); const cancelSyncBtn = document.getElementById('cancelSyncBtn'); const timeoutNotice = document.getElementById('timeoutNotice');
+
+document.getElementById('cloudSyncBtn').addEventListener('click', () => {
+  const cfg = getCloudConfig(); document.getElementById('scriptUrl').value = cfg.scriptUrl || '';
+  document.getElementById('urlError').style.display = 'none'; syncSteps.classList.remove('show'); timeoutNotice.classList.remove('show'); cancelSyncBtn.style.display = 'none';
+  document.getElementById('unsyncSection').style.display = cfg.scriptUrl ? 'block' : 'none';
+  cloudModal.classList.add('open');
+});
+document.getElementById('closeCloudModal').addEventListener('click', () => cloudModal.classList.remove('open'));
+cloudModal.addEventListener('click', e => { if (e.target === cloudModal) cloudModal.classList.remove('open'); });
+document.getElementById('testSyncBtn').addEventListener('click', testConnection);
+
+function setStep(n, status) {
+  const step = document.getElementById('step' + n); const icon = document.getElementById('step' + n + 'Icon');
+  step.classList.remove('active', 'done', 'error'); step.classList.add(status);
+  if (status === 'active') icon.innerHTML = '<div class="spinner"></div>';
+  else if (status === 'done') icon.innerHTML = '✓';
+  else if (status === 'error') icon.innerHTML = '✗';
+  else icon.innerHTML = '○';
+}
+function resetSteps() { for (let i = 1; i <= 3; i++) setStep(i, ''); }
+function resetSyncUI() { saveCloudBtn.disabled = false; saveCloudBtn.innerHTML = 'Save & Enable'; cancelSyncBtn.style.display = 'none'; timeoutNotice.classList.remove('show'); isSyncing = false; }
+
+cancelSyncBtn.addEventListener('click', () => { isSyncing = false; resetSyncUI(); showToast('Cancelled', 'warning'); });
+
+saveCloudBtn.addEventListener('click', async () => {
+  const scriptUrl = document.getElementById('scriptUrl').value.trim();
+  document.getElementById('urlError').style.display = scriptUrl ? 'none' : 'block';
+  if (!scriptUrl) { showToast('Enter URL', 'error'); return; }
+  if (isSyncing) return; isSyncing = true;
+  
+  saveCloudBtn.disabled = true; saveCloudBtn.innerHTML = '<div class="spinner"></div> Processing...';
+  cancelSyncBtn.style.display = 'inline-flex'; syncSteps.classList.add('show'); timeoutNotice.classList.remove('show'); resetSteps();
+  
+  try {
+    setStep(1, 'active'); saveCloudConfig({ scriptUrl }); await new Promise(r => setTimeout(r, 300)); if (!isSyncing) throw new Error('Cancelled'); setStep(1, 'done');
+    
+    setStep(2, 'active'); const allLinks = await dbGetAll(); const data = allLinks.map(l => ({ id: l.id, url: l.url, title: l.title, description: l.description, category: l.category, favorite: l.favorite, date: l.date }));
+    const res = await fetchWithTimeout(scriptUrl + '?action=write', { method: 'POST', body: JSON.stringify(data) });
+    if (!isSyncing) throw new Error('Cancelled'); if (!res.ok) { setStep(2, 'error'); throw new Error('HTTP ' + res.status); } setStep(2, 'done');
+    
+    setStep(3, 'active'); document.getElementById('unsyncSection').style.display = 'block'; updateSyncStatus('synced'); await new Promise(r => setTimeout(r, 300)); if (!isSyncing) throw new Error('Cancelled'); setStep(3, 'done');
+    
+    showToast('Google Sheets sync enabled! ✓'); resetSyncUI();
+  } catch (error) {
+    console.error(error);
+    if (error.message === 'Cancelled') showToast('Cancelled', 'warning');
+    else if (error.message.includes('timed out')) { timeoutNotice.classList.add('show'); showToast('Timed out', 'error'); }
+    else showToast('Error: ' + error.message, 'error');
+    resetSyncUI(); clearCloudConfig(); updateSyncStatus();
+  }
+});
+
+document.getElementById('pushSyncBtn').addEventListener('click', () => pushToCloud(true));
+document.getElementById('pullSyncBtn').addEventListener('click', pullFromCloud);
+document.getElementById('unsyncBtn').addEventListener('click', () => {
+  if (confirm('Unsync? Links remain safe locally.')) { clearCloudConfig(); document.getElementById('unsyncSection').style.display = 'none'; updateSyncStatus(); cloudModal.classList.remove('open'); showToast('Unsynced'); }
+});
+
+// ============ SEARCH & EXPORT/IMPORT ============
+document.getElementById('searchInput').addEventListener('input', e => { searchQuery = e.target.value; renderGrid(); });
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const all = await dbGetAll(); const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'links-backup-' + new Date().toISOString().slice(0,10) + '.json'; a.click(); URL.revokeObjectURL(url); showToast('Exported');
+});
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result); if (!Array.isArray(imported)) throw new Error('Invalid');
+      const existing = await dbGetAll(); const urls = new Set(existing.map(l => l.url)); let added = 0;
+      for (const l of imported) { if (!urls.has(l.url)) { await dbPut({ id: l.id || 'l_' + Date.now(), url: l.url, title: l.title || autoDetect(l.url).title, description: l.description || '', category: l.category || 'other', favorite: l.favorite || false, date: l.date || new Date().toISOString(), preview: l.preview || getScreenshot(l.url) }); added++; } }
+      links = await dbGetAll(); render(); scheduleSync(); showToast('Imported ' + added + ' links');
+    } catch { showToast('Import failed', 'error'); }
+  }; reader.readAsText(file); e.target.value = '';
+});
+
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg; toast.style.background = type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--text)';
+  toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+let syncTimer = null;
+function scheduleSync() { const cfg = getCloudConfig(); if (!cfg.scriptUrl) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => pushToCloud(false), 2000); }
+
+// ============ INIT ============
+(async () => {
+  try { links = await dbGetAll(); updateSyncStatus(); render(); const cfg = getCloudConfig(); if (cfg.scriptUrl) setTimeout(() => pullFromCloud(), 1000); }
+  catch (e) { console.error(e); updateSyncStatus('error'); render(); }
+})();
+</script>
+</body>
+</html>
