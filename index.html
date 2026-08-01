@@ -6,12 +6,7 @@
 <title>Link Organizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f7f8fc; --surface: #ffffff; --surface-2: #f1f3f9; --border: #e6e8f0;
-    --text: #1a1f36; --text-muted: #6b7194; --accent: #6366f1; --accent-hover: #4f46e5;
-    --accent-soft: #eef2ff; --danger: #ef4444; --danger-soft: #fef2f2;
-    --success: #10b981; --warning: #f59e0b;
-  }
+  :root { --bg: #f7f8fc; --surface: #ffffff; --surface-2: #f1f3f9; --border: #e6e8f0; --text: #1a1f36; --text-muted: #6b7194; --accent: #6366f1; --accent-hover: #4f46e5; --accent-soft: #eef2ff; --danger: #ef4444; --danger-soft: #fef2f2; --success: #10b981; }
   html, body { height: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
   .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
@@ -22,7 +17,6 @@
   .logo-sub { font-size: 11px; color: var(--text-muted); }
   .sync-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); padding: 6px 10px; background: var(--surface-2); border-radius: 8px; margin-bottom: 16px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
-  .sync-dot.offline { background: var(--warning); }
   .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); padding: 0 10px; margin: 18px 0 10px; font-weight: 600; }
   .filter-list { list-style: none; }
   .filter-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text); transition: all .15s ease; margin-bottom: 2px; }
@@ -55,7 +49,7 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 32px; padding: 20px 10px; }
   .card { position: relative; background: var(--surface); border-radius: 18px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s; }
   .card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,.1); border-color: var(--accent); }
-  .card-preview { width: 100%; height: 200px; background: var(--surface-2); overflow: hidden; }
+  .card-preview { width: 100%; height: 200px; background: var(--surface-2); overflow: hidden; position: relative; }
   .card-preview img { width: 100%; height: 100%; object-fit: cover; }
   .card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 5px; opacity: 0; transition: opacity .2s; }
   .card:hover .card-actions { opacity: 1; }
@@ -86,18 +80,7 @@
   .btn-secondary:hover { background: #e5e7f0; }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text); color: white; padding: 12px 20px; border-radius: 12px; font-size: 14px; z-index: 200; transition: transform .25s ease; }
   .toast.show { transform: translateX(-50%) translateY(0); }
-  .spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .sync-steps { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin-top: 16px; font-size: 12px; display: none; }
-  .sync-steps.show { display: block; }
-  .sync-step { display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--text-muted); }
-  .sync-step.active { color: var(--accent); font-weight: 600; }
-  .sync-step.done { color: var(--success); }
-  .sync-step-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
-  .btn-unsync { background: var(--danger-soft); color: var(--danger); border: 1px solid #fecaca; width: 100%; margin-top: 10px; }
-  .unsync-divider { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
-  .timeout-notice { background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 12px; color: #92400e; display: none; }
-  .timeout-notice.show { display: block; }
+  .paste-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -108,7 +91,7 @@
       <div><div class="logo-text">Link Organizer</div><div class="logo-sub">Your personal library</div></div>
     </div>
     <div class="sync-status" id="syncStatus">
-      <div class="sync-dot" id="syncDot"></div><span id="syncText">Loading...</span>
+      <div class="sync-dot" id="syncDot"></div><span id="syncText">Auto-sync active</span>
     </div>
     <div class="section-title">Categories</div>
     <ul class="filter-list" id="categoryList"></ul>
@@ -120,7 +103,6 @@
     <div class="sidebar-footer">
       <button class="btn btn-primary" id="addBtn">➕ Add New Link</button>
       <div style="margin-top:10px;">
-        <button class="btn btn-ghost" id="cloudSyncBtn">☁️ Cloud Sync Settings</button>
         <button class="btn btn-ghost" id="exportBtn">📥 Export Backup</button>
         <button class="btn btn-ghost" id="importBtn">📤 Import Backup</button>
         <input type="file" id="importFile" accept=".json" style="display:none;" />
@@ -136,7 +118,7 @@
     </div>
     <div class="content">
       <div class="quick-add">
-        <div class="quick-add-icon">🔗</div>
+        <div class="quick-add-icon"></div>
         <input type="url" id="quickUrl" placeholder="Just paste a link here..." />
         <button class="quick-add-btn" id="quickAddBtn" disabled><span>Save</span></button>
       </div>
@@ -151,6 +133,15 @@
   <div class="modal">
     <div class="modal-header"><div class="modal-title" id="modalTitle">Add New Link</div><button class="modal-close" id="closeModal">✕</button></div>
     <div class="modal-body">
+      <div class="field">
+        <label>Screenshot or Image</label>
+        <div id="pasteArea" style="border: 2px dashed var(--border); border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all .2s; background: var(--surface-2);">
+          <div style="font-size: 32px; margin-bottom: 10px;">📸</div>
+          <div style="font-weight: 600; margin-bottom: 5px;">Paste or drop screenshot here</div>
+          <div class="paste-hint">Press Ctrl+V to paste an image</div>
+        </div>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" />
+      </div>
       <div class="field"><label>Website URL *</label><input type="url" id="urlInput" placeholder="https://example.com" /></div>
       <div class="field"><label>Title</label><input type="text" id="titleInput" /></div>
       <div class="field"><label>Category</label><select id="categoryInput"></select></div>
@@ -163,145 +154,42 @@
     </div>
   </div>
 </div>
-
-<!-- Cloud Sync Modal -->
-<div class="modal-overlay" id="cloudModal">
-  <div class="modal">
-    <div class="modal-header"><div class="modal-title">☁️ Google Sheets Sync</div><button class="modal-close" id="closeCloudModal">✕</button></div>
-    <div class="modal-body">
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Sync your links to a Google Sheet for cross-device access.</p>
-      <div class="field">
-        <label>Google Apps Script Web App URL</label>
-        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." />
-        <div class="error-hint" id="urlError" style="color:var(--danger);font-size:11px;margin-top:4px;display:none;">URL is required</div>
-      </div>
-      <div style="display:flex; gap:8px; margin-top:16px;">
-        <button class="btn btn-secondary" id="testSyncBtn" style="flex:1;">Test Connection</button>
-        <button class="btn btn-primary" id="saveCloudBtn" style="flex:1;">Save & Enable</button>
-      </div>
-      <div class="sync-steps" id="syncSteps">
-        <div class="sync-step" id="step1"><div class="sync-step-icon" id="step1Icon">○</div><span>Testing connection...</span></div>
-        <div class="sync-step" id="step2"><div class="sync-step-icon" id="step2Icon">○</div><span>Pushing links to sheet...</span></div>
-        <div class="sync-step" id="step3"><div class="sync-step-icon" id="step3Icon">○</div><span>Enabling auto-sync...</span></div>
-      </div>
-      <div class="timeout-notice" id="timeoutNotice">⏱️ Request timed out. Check your internet or script URL.</div>
-      <button class="btn btn-secondary" id="cancelSyncBtn" style="display:none;width:100%;margin-top:10px;">Cancel</button>
-      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
-        <div style="font-size:13px; font-weight:600; margin-bottom:8px;">Manual Sync</div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-secondary" id="pushSyncBtn" style="flex:1;">Push to Sheet</button>
-          <button class="btn btn-secondary" id="pullSyncBtn" style="flex:1;">Pull from Sheet</button>
-        </div>
-      </div>
-      <div class="unsync-divider" id="unsyncSection" style="display:none;">
-        <button class="btn btn-unsync" id="unsyncBtn">Unsync Cloud</button>
-      </div>
-    </div>
-  </div>
-</div>
 <div class="toast" id="toast"></div>
 
 <script>
+// ============ AUTO SYNC CONFIGURATION ============
+// Your Google Sheet URL is hardcoded here. It will sync automatically in the background.
+const AUTO_SYNC_URL = "https://script.google.com/macros/s/AKfycbzWVReYfx1sgRvdgevqqm7xCZcOZvsPc88sQhar_kFf6UTlMFiqvNt4lDpJinC6LxH1/exec";
+
 // ============ DATABASE ============
 const DB_NAME = 'LinkOrganizerDB'; const STORE_NAME = 'links';
 function openDB() { return new Promise((resolve, reject) => { const req = indexedDB.open(DB_NAME, 1); req.onerror = () => reject(req.error); req.onsuccess = () => resolve(req.result); req.onupgradeneeded = (e) => { const db = e.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' }); }; }); }
 async function dbGetAll() { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readonly'); const req = tx.objectStore(STORE_NAME).getAll(); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(req.error); }); }
 async function dbPut(link) { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).put(link); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
 async function dbDelete(id) { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).delete(id); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
-async function dbClear() { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).clear(); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
 
-// ============ FETCH WITH TIMEOUT ============
-const TIMEOUT = 30000;
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return res;
-  } catch (e) {
-    clearTimeout(timeoutId);
-    if (e.name === 'AbortError') throw new Error('Request timed out');
-    throw e;
-  }
+// ============ SILENT BACKGROUND SYNC ============
+// This runs invisibly. It doesn't show popups or slow down your app.
+let syncTimeout;
+function triggerBackgroundSync() {
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => {
+    dbGetAll().then(links => {
+      const data = links.map(l => ({ id: l.id, url: l.url, title: l.title, description: l.description, category: l.category, favorite: l.favorite, date: l.date }));
+      // Fire and forget - we don't wait for the response
+      fetch(AUTO_SYNC_URL + '?action=write', { method: 'POST', body: JSON.stringify(data) })
+        .then(() => console.log('Background sync successful'))
+        .catch(e => console.log('Background sync failed (offline?)', e));
+    });
+  }, 1000); // Waits 1 second after you stop typing/clicking to sync
 }
 
-// ============ CLOUD SYNC ============
-function getCloudConfig() { try { return JSON.parse(localStorage.getItem('cloudConfig') || '{}'); } catch { return {}; } }
-function saveCloudConfig(c) { localStorage.setItem('cloudConfig', JSON.stringify(c)); }
-function clearCloudConfig() { localStorage.removeItem('cloudConfig'); }
-
-async function pushToCloud(showMsg = true) {
-  const cfg = getCloudConfig();
-  if (!cfg.scriptUrl) { if (showMsg) showToast('Configure sync first', 'error'); return false; }
-  try {
-    updateSyncStatus('syncing');
-    const links = await dbGetAll();
-    const data = links.map(l => ({ id: l.id, url: l.url, title: l.title, description: l.description, category: l.category, favorite: l.favorite, date: l.date }));
-    const res = await fetchWithTimeout(cfg.scriptUrl + '?action=write', { method: 'POST', body: JSON.stringify(data) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    updateSyncStatus('synced');
-    if (showMsg) showToast('Pushed to sheet ✓');
-    return true;
-  } catch (e) {
-    updateSyncStatus('error');
-    if (showMsg) showToast('Sync failed: ' + e.message, 'error');
-    return false;
-  }
-}
-
-async function pullFromCloud() {
-  const cfg = getCloudConfig();
-  if (!cfg.scriptUrl) { showToast('Configure sync first', 'error'); return false; }
-  try {
-    updateSyncStatus('syncing');
-    const res = await fetchWithTimeout(cfg.scriptUrl + '?action=read');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const cloudLinks = await res.json();
-    if (!Array.isArray(cloudLinks)) throw new Error('Invalid data');
-    await dbClear();
-    for (const l of cloudLinks) {
-      if (!l.preview) l.preview = 'https://image.thum.io/get/width/800/crop/500/noanimate/' + encodeURIComponent(l.url);
-      await dbPut(l);
-    }
-    links = await dbGetAll();
-    render();
-    updateSyncStatus('synced');
-    showToast('Pulled ' + cloudLinks.length + ' links ✓');
-    return true;
-  } catch (e) {
-    updateSyncStatus('error');
-    showToast('Pull failed: ' + e.message, 'error');
-    return false;
-  }
-}
-
-async function testConnection() {
-  const url = document.getElementById('scriptUrl').value.trim();
-  if (!url) { showToast('Enter URL first', 'error'); return false; }
-  try {
-    showToast('Testing...');
-    const res = await fetchWithTimeout(url + '?action=read');
-    if (res.ok) { showToast('Connected! ✓'); return true; }
-    else { showToast('Failed: HTTP ' + res.status, 'error'); return false; }
-  } catch (e) { showToast('Failed: ' + e.message, 'error'); return false; }
-}
-
-function updateSyncStatus(status) {
-  const dot = document.getElementById('syncDot'); const txt = document.getElementById('syncText');
-  const cfg = getCloudConfig();
-  if (!cfg.scriptUrl) { dot.className = 'sync-dot offline'; txt.textContent = 'Local only'; return; }
-  if (status === 'syncing') { dot.className = 'sync-dot'; txt.textContent = 'Syncing...'; }
-  else if (status === 'synced') { dot.className = 'sync-dot'; txt.textContent = 'Synced to Sheets'; }
-  else { dot.className = 'sync-dot offline'; txt.textContent = 'Sync error'; }
-}
-
-// ============ DATA ============
-const CATEGORIES = { work: { name: 'Work', color: '#6366f1', icon: '💼' }, research: { name: 'Research', color: '#10b981', icon: '🔬' }, shopping: { name: 'Shopping', color: '#f59e0b', icon: '🛍️' }, entertainment: { name: 'Entertainment', color: '#ef4444', icon: '🎬' }, productivity: { name: 'Productivity', color: '#8b5cf6', icon: '' }, social: { name: 'Social', color: '#3b82f6', icon: '💬' }, news: { name: 'News', color: '#ec4899', icon: '📰' }, education: { name: 'Education', color: '#14b8a6', icon: '📚' }, design: { name: 'Design', color: '#f97316', icon: '🎨' }, finance: { name: 'Finance', color: '#059669', icon: '💰' }, travel: { name: 'Travel', color: '#0ea5e9', icon: '✈️' }, food: { name: 'Food', color: '#dc2626', icon: '🍕' }, health: { name: 'Health', color: '#22c55e', icon: '💊' }, tech: { name: 'Tech', color: '#6366f1', icon: '💻' }, other: { name: 'Other', color: '#6b7280', icon: '🔗' } };
+// ============ DATA & HELPERS ============
+const CATEGORIES = { work: { name: 'Work', color: '#6366f1', icon: '💼' }, research: { name: 'Research', color: '#10b981', icon: '' }, shopping: { name: 'Shopping', color: '#f59e0b', icon: '🛍️' }, entertainment: { name: 'Entertainment', color: '#ef4444', icon: '🎬' }, productivity: { name: 'Productivity', color: '#8b5cf6', icon: '⚡' }, social: { name: 'Social', color: '#3b82f6', icon: '💬' }, news: { name: 'News', color: '#ec4899', icon: '📰' }, education: { name: 'Education', color: '#14b8a6', icon: '' }, design: { name: 'Design', color: '#f97316', icon: '🎨' }, finance: { name: 'Finance', color: '#059669', icon: '💰' }, travel: { name: 'Travel', color: '#0ea5e9', icon: '✈️' }, food: { name: 'Food', color: '#dc2626', icon: '🍕' }, health: { name: 'Health', color: '#22c55e', icon: '💊' }, tech: { name: 'Tech', color: '#6366f1', icon: '💻' }, other: { name: 'Other', color: '#6b7280', icon: '🔗' } };
 const DOMAIN_RULES = [ { keys: ['github','gitlab','stackoverflow','vercel','netlify','jira'], cat: 'work', desc: 'Development platform' }, { keys: ['youtube','netflix','spotify','twitch'], cat: 'entertainment', desc: 'Entertainment platform' }, { keys: ['notion','trello','todoist'], cat: 'productivity', desc: 'Productivity tool' }, { keys: ['twitter','facebook','instagram','linkedin','reddit'], cat: 'social', desc: 'Social media' }, { keys: ['amazon','ebay','etsy'], cat: 'shopping', desc: 'Shopping site' } ];
 const KNOWN_TITLES = { 'github.com': 'GitHub', 'medium.com': 'Medium', 'amazon.com': 'Amazon', 'youtube.com': 'YouTube', 'notion.so': 'Notion', 'twitter.com': 'Twitter', 'reddit.com': 'Reddit', 'linkedin.com': 'LinkedIn', 'netflix.com': 'Netflix', 'spotify.com': 'Spotify' };
 
-let links = []; let currentFilter = { type: 'all' }; let searchQuery = ''; let editingId = null; let quickAddData = null; let quickTimer = null; let isSyncing = false;
+let links = []; let currentFilter = { type: 'all' }; let searchQuery = ''; let editingId = null; let quickAddData = null; let quickTimer = null; let currentImage = null;
 
 function extractDomain(url) { try { return new URL(url).hostname.replace('www.',''); } catch { return url; } }
 function autoDetect(url) {
@@ -313,8 +201,38 @@ function autoDetect(url) {
   return { title, category: cat, description: desc };
 }
 function getScreenshot(url) { return 'https://image.thum.io/get/width/800/crop/500/noanimate/' + encodeURIComponent(url); }
-function getFavicon(url) { return 'https://www.google.com/s2/favicons?domain=' + extractDomain(url) + '&sz=32'; }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ============ IMAGE PASTE FEATURE ============
+const pasteArea = document.getElementById('pasteArea');
+const imageInput = document.getElementById('imageInput');
+
+pasteArea.addEventListener('click', () => imageInput.click());
+imageInput.addEventListener('change', (e) => { if (e.target.files[0]) handleImageFile(e.target.files[0]); });
+
+document.addEventListener('paste', (e) => {
+  if (!document.getElementById('modal').classList.contains('open')) return;
+  const items = e.clipboardData.items;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      handleImageFile(items[i].getAsFile());
+      e.preventDefault();
+      break;
+    }
+  }
+});
+
+function handleImageFile(file) {
+  if (!file.type.startsWith('image/')) { showToast('Please select an image file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    currentImage = e.target.result;
+    pasteArea.innerHTML = '<img src="' + currentImage + '" style="max-width:100%;max-height:200px;border-radius:8px;" /><div style="margin-top:10px;font-weight:600;color:var(--success);">✓ Image loaded</div><div class="paste-hint">Click to change</div>';
+    pasteArea.style.borderColor = 'var(--success)';
+    pasteArea.style.background = '#ecfdf5';
+  };
+  reader.readAsDataURL(file);
+}
 
 // ============ RENDER ============
 function renderCategories() {
@@ -344,15 +262,15 @@ function renderGrid() {
   else if (currentFilter.type === 'recent') { titleEl.textContent = ' Recently Added'; subEl.textContent = 'Last 7 days'; }
   else if (currentFilter.type === 'favorites') { titleEl.textContent = '⭐ Favorites'; subEl.textContent = filtered.length + ' links'; }
   
-  if (filtered.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div style="font-size:48px;margin-bottom:16px;">📭</div><h3>No links yet</h3><p>Paste a link above to get started!</p></div>'; return; }
+  if (filtered.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div style="font-size:48px;margin-bottom:16px;"></div><h3>No links yet</h3><p>Paste a link or screenshot above to get started!</p></div>'; return; }
   
   grid.innerHTML = filtered.map((l, i) => {
-    const cat = CATEGORIES[l.category] || CATEGORIES.other; const domain = extractDomain(l.url); const favicon = getFavicon(l.url);
+    const cat = CATEGORIES[l.category] || CATEGORIES.other; const domain = extractDomain(l.url);
     const screenshot = l.preview || getScreenshot(l.url);
     return '<div class="card" data-id="' + l.id + '" style="animation-delay:' + (i * 40) + 'ms;">' +
       '<div class="card-actions">' +
         '<button class="card-action-btn" data-action="fav" style="color:' + (l.favorite ? '#f59e0b' : 'inherit') + '">⭐</button>' +
-        '<button class="card-action-btn" data-action="copy">📋</button>' +
+        '<button class="card-action-btn" data-action="copy"></button>' +
         '<button class="card-action-btn" data-action="open">↗</button>' +
         '<button class="card-action-btn delete" data-action="delete">🗑</button>' +
       '</div>' +
@@ -372,10 +290,10 @@ function renderGrid() {
         e.stopPropagation();
         const id = card.dataset.id; const action = btn.dataset.action;
         const link = links.find(l => l.id === id);
-        if (action === 'fav') { link.favorite = !link.favorite; dbPut(link).then(() => { links = links.slice(); render(); scheduleSync(); }); }
+        if (action === 'fav') { link.favorite = !link.favorite; dbPut(link).then(() => { links = links.slice(); render(); triggerBackgroundSync(); }); }
         else if (action === 'copy') { navigator.clipboard.writeText(link.url); showToast('Copied!'); }
         else if (action === 'open') { window.open(link.url, '_blank'); }
-        else if (action === 'delete') { if (confirm('Delete?')) { dbDelete(id).then(() => { links = links.filter(l => l.id !== id); render(); scheduleSync(); }); } }
+        else if (action === 'delete') { if (confirm('Delete?')) { dbDelete(id).then(() => { links = links.filter(l => l.id !== id); render(); triggerBackgroundSync(); }); } }
         return;
       }
       openEditModal(card.dataset.id);
@@ -388,18 +306,29 @@ function render() { renderCategories(); renderGrid(); }
 // ============ MODAL ============
 const modal = document.getElementById('modal');
 function openModal() { modal.classList.add('open'); }
-function closeModal() { modal.classList.remove('open'); editingId = null; }
-function populateCats(sel) { document.getElementById('categoryInput').innerHTML = Object.entries(CATEGORIES).map(([k, c]) => '<option value="' + k + '">' + c.icon + ' ' + c.name + '</option>').join(''); }
+function closeModal() { modal.classList.remove('open'); editingId = null; currentImage = null; resetPasteArea(); }
+function populateCats() { document.getElementById('categoryInput').innerHTML = Object.entries(CATEGORIES).map(([k, c]) => '<option value="' + k + '">' + c.icon + ' ' + c.name + '</option>').join(''); }
+function resetPasteArea() {
+  pasteArea.innerHTML = '<div style="font-size: 32px; margin-bottom: 10px;">📸</div><div style="font-weight: 600; margin-bottom: 5px;">Paste or drop screenshot here</div><div class="paste-hint">Press Ctrl+V to paste an image</div>';
+  pasteArea.style.borderColor = 'var(--border)';
+  pasteArea.style.background = 'var(--surface-2)';
+}
 
 function openAddModal() {
-  editingId = null; document.getElementById('modalTitle').textContent = 'Add New Link'; document.getElementById('deleteBtn').style.display = 'none';
+  editingId = null; currentImage = null;
+  document.getElementById('modalTitle').textContent = 'Add New Link'; document.getElementById('deleteBtn').style.display = 'none';
   document.getElementById('urlInput').value = ''; document.getElementById('titleInput').value = ''; document.getElementById('descInput').value = '';
-  populateCats(); openModal(); setTimeout(() => document.getElementById('urlInput').focus(), 100);
+  resetPasteArea(); populateCats(); openModal(); setTimeout(() => document.getElementById('urlInput').focus(), 100);
 }
 function openEditModal(id) {
   const link = links.find(l => l.id === id); if (!link) return; editingId = id;
   document.getElementById('modalTitle').textContent = 'Edit Link'; document.getElementById('deleteBtn').style.display = 'inline-flex';
   document.getElementById('urlInput').value = link.url; document.getElementById('titleInput').value = link.title; document.getElementById('descInput').value = link.description;
+  if (link.preview) {
+    currentImage = link.preview;
+    pasteArea.innerHTML = '<img src="' + currentImage + '" style="max-width:100%;max-height:200px;border-radius:8px;" /><div style="margin-top:10px;font-weight:600;color:var(--success);">✓ Image loaded</div><div class="paste-hint">Click to change</div>';
+    pasteArea.style.borderColor = 'var(--success)'; pasteArea.style.background = '#ecfdf5';
+  } else { resetPasteArea(); }
   populateCats(); document.getElementById('categoryInput').value = link.category; openModal();
 }
 
@@ -427,14 +356,14 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   
   if (editingId) {
     const idx = links.findIndex(l => l.id === editingId);
-    if (idx !== -1) { links[idx] = { ...links[idx], url, title, category, description }; await dbPut(links[idx]); links = await dbGetAll(); closeModal(); render(); scheduleSync(); showToast('Updated!'); }
+    if (idx !== -1) { links[idx] = { ...links[idx], url, title, category, description, preview: currentImage || links[idx].preview }; await dbPut(links[idx]); links = await dbGetAll(); closeModal(); render(); triggerBackgroundSync(); }
   } else {
     if (links.some(l => l.url === url)) { showToast('Already saved', 'warning'); return; }
-    const newLink = { id: 'l_' + Date.now(), url, title, category, description, favorite: false, date: new Date().toISOString(), preview: getScreenshot(url) };
-    await dbPut(newLink); links = await dbGetAll(); closeModal(); render(); scheduleSync(); showToast('Saved!');
+    const newLink = { id: 'l_' + Date.now(), url, title, category, description, favorite: false, date: new Date().toISOString(), preview: currentImage || getScreenshot(url) };
+    await dbPut(newLink); links = await dbGetAll(); closeModal(); render(); triggerBackgroundSync();
   }
 });
-document.getElementById('deleteBtn').addEventListener('click', async () => { if (editingId && confirm('Delete?')) { await dbDelete(editingId); links = await dbGetAll(); closeModal(); render(); scheduleSync(); } });
+document.getElementById('deleteBtn').addEventListener('click', async () => { if (editingId && confirm('Delete?')) { await dbDelete(editingId); links = await dbGetAll(); closeModal(); render(); triggerBackgroundSync(); } });
 
 // ============ QUICK ADD ============
 const quickUrl = document.getElementById('quickUrl'); const quickBtn = document.getElementById('quickAddBtn');
@@ -443,79 +372,19 @@ quickUrl.addEventListener('input', () => {
   if (!url) { quickBtn.disabled = true; return; }
   let valid = url.startsWith('http') ? url : 'https://' + url;
   try { new URL(valid); } catch { quickBtn.disabled = true; return; }
-  quickBtn.disabled = true; quickBtn.classList.add('loading'); quickBtn.querySelector('span').textContent = 'Analyzing...';
+  quickBtn.disabled = true; quickBtn.querySelector('span').textContent = 'Analyzing...';
   quickTimer = setTimeout(() => {
     const d = autoDetect(valid); quickAddData = { url: valid, title: d.title, category: d.category, description: d.description, preview: getScreenshot(valid) };
-    quickBtn.disabled = false; quickBtn.classList.remove('loading'); quickBtn.querySelector('span').textContent = 'Save';
+    quickBtn.disabled = false; quickBtn.querySelector('span').textContent = 'Save';
   }, 500);
 });
 quickBtn.addEventListener('click', async () => {
   if (!quickAddData) return; if (links.some(l => l.url === quickAddData.url)) { showToast('Already saved', 'warning'); return; }
   const newLink = { id: 'l_' + Date.now(), ...quickAddData, favorite: false, date: new Date().toISOString() };
-  await dbPut(newLink); links = await dbGetAll(); render(); scheduleSync();
+  await dbPut(newLink); links = await dbGetAll(); render(); triggerBackgroundSync();
   quickUrl.value = ''; quickAddData = null; quickBtn.disabled = true; showToast('Saved!');
 });
 quickUrl.addEventListener('keydown', e => { if (e.key === 'Enter' && quickAddData) quickBtn.click(); });
-
-// ============ CLOUD MODAL ============
-const cloudModal = document.getElementById('cloudModal'); const syncSteps = document.getElementById('syncSteps'); const saveCloudBtn = document.getElementById('saveCloudBtn'); const cancelSyncBtn = document.getElementById('cancelSyncBtn'); const timeoutNotice = document.getElementById('timeoutNotice');
-
-document.getElementById('cloudSyncBtn').addEventListener('click', () => {
-  const cfg = getCloudConfig(); document.getElementById('scriptUrl').value = cfg.scriptUrl || '';
-  document.getElementById('urlError').style.display = 'none'; syncSteps.classList.remove('show'); timeoutNotice.classList.remove('show'); cancelSyncBtn.style.display = 'none';
-  document.getElementById('unsyncSection').style.display = cfg.scriptUrl ? 'block' : 'none';
-  cloudModal.classList.add('open');
-});
-document.getElementById('closeCloudModal').addEventListener('click', () => cloudModal.classList.remove('open'));
-cloudModal.addEventListener('click', e => { if (e.target === cloudModal) cloudModal.classList.remove('open'); });
-document.getElementById('testSyncBtn').addEventListener('click', testConnection);
-
-function setStep(n, status) {
-  const step = document.getElementById('step' + n); const icon = document.getElementById('step' + n + 'Icon');
-  step.classList.remove('active', 'done', 'error'); step.classList.add(status);
-  if (status === 'active') icon.innerHTML = '<div class="spinner"></div>';
-  else if (status === 'done') icon.innerHTML = '✓';
-  else if (status === 'error') icon.innerHTML = '✗';
-  else icon.innerHTML = '○';
-}
-function resetSteps() { for (let i = 1; i <= 3; i++) setStep(i, ''); }
-function resetSyncUI() { saveCloudBtn.disabled = false; saveCloudBtn.innerHTML = 'Save & Enable'; cancelSyncBtn.style.display = 'none'; timeoutNotice.classList.remove('show'); isSyncing = false; }
-
-cancelSyncBtn.addEventListener('click', () => { isSyncing = false; resetSyncUI(); showToast('Cancelled', 'warning'); });
-
-saveCloudBtn.addEventListener('click', async () => {
-  const scriptUrl = document.getElementById('scriptUrl').value.trim();
-  document.getElementById('urlError').style.display = scriptUrl ? 'none' : 'block';
-  if (!scriptUrl) { showToast('Enter URL', 'error'); return; }
-  if (isSyncing) return; isSyncing = true;
-  
-  saveCloudBtn.disabled = true; saveCloudBtn.innerHTML = '<div class="spinner"></div> Processing...';
-  cancelSyncBtn.style.display = 'inline-flex'; syncSteps.classList.add('show'); timeoutNotice.classList.remove('show'); resetSteps();
-  
-  try {
-    setStep(1, 'active'); saveCloudConfig({ scriptUrl }); await new Promise(r => setTimeout(r, 300)); if (!isSyncing) throw new Error('Cancelled'); setStep(1, 'done');
-    
-    setStep(2, 'active'); const allLinks = await dbGetAll(); const data = allLinks.map(l => ({ id: l.id, url: l.url, title: l.title, description: l.description, category: l.category, favorite: l.favorite, date: l.date }));
-    const res = await fetchWithTimeout(scriptUrl + '?action=write', { method: 'POST', body: JSON.stringify(data) });
-    if (!isSyncing) throw new Error('Cancelled'); if (!res.ok) { setStep(2, 'error'); throw new Error('HTTP ' + res.status); } setStep(2, 'done');
-    
-    setStep(3, 'active'); document.getElementById('unsyncSection').style.display = 'block'; updateSyncStatus('synced'); await new Promise(r => setTimeout(r, 300)); if (!isSyncing) throw new Error('Cancelled'); setStep(3, 'done');
-    
-    showToast('Google Sheets sync enabled! ✓'); resetSyncUI();
-  } catch (error) {
-    console.error(error);
-    if (error.message === 'Cancelled') showToast('Cancelled', 'warning');
-    else if (error.message.includes('timed out')) { timeoutNotice.classList.add('show'); showToast('Timed out', 'error'); }
-    else showToast('Error: ' + error.message, 'error');
-    resetSyncUI(); clearCloudConfig(); updateSyncStatus();
-  }
-});
-
-document.getElementById('pushSyncBtn').addEventListener('click', () => pushToCloud(true));
-document.getElementById('pullSyncBtn').addEventListener('click', pullFromCloud);
-document.getElementById('unsyncBtn').addEventListener('click', () => {
-  if (confirm('Unsync? Links remain safe locally.')) { clearCloudConfig(); document.getElementById('unsyncSection').style.display = 'none'; updateSyncStatus(); cloudModal.classList.remove('open'); showToast('Unsynced'); }
-});
 
 // ============ SEARCH & EXPORT/IMPORT ============
 document.getElementById('searchInput').addEventListener('input', e => { searchQuery = e.target.value; renderGrid(); });
@@ -531,24 +400,25 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
       const imported = JSON.parse(ev.target.result); if (!Array.isArray(imported)) throw new Error('Invalid');
       const existing = await dbGetAll(); const urls = new Set(existing.map(l => l.url)); let added = 0;
       for (const l of imported) { if (!urls.has(l.url)) { await dbPut({ id: l.id || 'l_' + Date.now(), url: l.url, title: l.title || autoDetect(l.url).title, description: l.description || '', category: l.category || 'other', favorite: l.favorite || false, date: l.date || new Date().toISOString(), preview: l.preview || getScreenshot(l.url) }); added++; } }
-      links = await dbGetAll(); render(); scheduleSync(); showToast('Imported ' + added + ' links');
+      links = await dbGetAll(); render(); triggerBackgroundSync(); showToast('Imported ' + added + ' links');
     } catch { showToast('Import failed', 'error'); }
   }; reader.readAsText(file); e.target.value = '';
 });
 
 function showToast(msg, type = 'success') {
   const toast = document.getElementById('toast');
-  toast.textContent = msg; toast.style.background = type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--text)';
+  toast.textContent = msg; toast.style.background = type === 'error' ? 'var(--danger)' : 'var(--text)';
   toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-let syncTimer = null;
-function scheduleSync() { const cfg = getCloudConfig(); if (!cfg.scriptUrl) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => pushToCloud(false), 2000); }
-
-// ============ INIT ============
+// ============ INIT (Starts automatically) ============
 (async () => {
-  try { links = await dbGetAll(); updateSyncStatus(); render(); const cfg = getCloudConfig(); if (cfg.scriptUrl) setTimeout(() => pullFromCloud(), 1000); }
-  catch (e) { console.error(e); updateSyncStatus('error'); render(); }
+  try { 
+    links = await dbGetAll(); 
+    render(); 
+    // Trigger a silent sync in the background to backup any new local links
+    triggerBackgroundSync(); 
+  } catch (e) { console.error(e); render(); }
 })();
 </script>
 </body>
