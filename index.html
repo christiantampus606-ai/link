@@ -6,17 +6,23 @@
 <title>Link Organizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --bg: #f7f8fc; --surface: #ffffff; --surface-2: #f1f3f9; --border: #e6e8f0; --text: #1a1f36; --text-muted: #6b7194; --accent: #6366f1; --accent-hover: #4f46e5; --accent-soft: #eef2ff; --danger: #ef4444; --danger-soft: #fef2f2; --success: #10b981; }
+  :root { 
+    --bg: #f7f8fc; --surface: #ffffff; --surface-2: #f1f3f9; --border: #e6e8f0; 
+    --text: #1a1f36; --text-muted: #6b7194; --accent: #6366f1; --accent-hover: #4f46e5; 
+    --accent-soft: #eef2ff; --danger: #ef4444; --danger-soft: #fef2f2; --success: #10b981; 
+  }
   html, body { height: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
   .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  
   .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
   .logo { display: flex; align-items: center; gap: 10px; padding: 6px 8px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
   .logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; }
   .logo-text { font-weight: 700; font-size: 16px; }
   .logo-sub { font-size: 11px; color: var(--text-muted); }
   .sync-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); padding: 6px 10px; background: var(--surface-2); border-radius: 8px; margin-bottom: 16px; }
-  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s ease infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); padding: 0 10px; margin: 18px 0 10px; font-weight: 600; }
   .filter-list { list-style: none; }
   .filter-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: var(--text); transition: all .15s ease; margin-bottom: 2px; }
@@ -27,10 +33,11 @@
   .sidebar-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .15s ease; font-family: inherit; }
   .btn-primary { background: var(--accent); color: white; width: 100%; }
-  .btn-primary:hover { background: var(--accent-hover); }
-  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   .btn-ghost { background: transparent; color: var(--text); width: 100%; justify-content: flex-start; }
   .btn-ghost:hover { background: var(--surface-2); }
+  
   .main { display: flex; flex-direction: column; min-width: 0; }
   .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; }
   .search-box { flex: 1; max-width: 480px; position: relative; }
@@ -40,28 +47,92 @@
   .content-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; }
   .content-title { font-size: 22px; font-weight: 700; }
   .content-sub { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
+  
   .quick-add { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
   .quick-add-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .quick-add input { flex: 1; border: none; outline: none; font-size: 15px; background: transparent; font-family: inherit; color: var(--text); }
   .quick-add-btn { padding: 10px 20px; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; }
   .quick-add-btn:hover { background: var(--accent-hover); }
   .quick-add-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* --- TILTED CARD STYLES --- */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 32px; padding: 20px 10px; }
-  .card { position: relative; background: var(--surface); border-radius: 18px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s; }
-  .card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,.1); border-color: var(--accent); }
+  .card { 
+    perspective: 1000px; 
+    position: relative; 
+    animation: fadeUp .4s ease both; 
+    overflow: visible; /* Allow tooltip to overflow */
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .card-tilt-wrapper {
+    position: relative;
+    background: var(--surface);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .card-tilt-wrapper:hover {
+    box-shadow: 0 30px 60px -15px rgba(99,102,241,0.25), 0 20px 40px -20px rgba(0,0,0,0.15);
+    border-color: var(--accent);
+  }
+  
   .card-preview { width: 100%; height: 200px; background: var(--surface-2); overflow: hidden; position: relative; }
-  .card-preview img { width: 100%; height: 100%; object-fit: cover; }
-  .card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 5px; opacity: 0; transition: opacity .2s; }
-  .card:hover .card-actions { opacity: 1; }
-  .card-action-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,.95); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); backdrop-filter: blur(8px); }
-  .card-action-btn:hover { background: white; transform: scale(1.08); }
-  .card-body { padding: 16px; }
+  .card-preview img { 
+    width: 100%; height: 100%; object-fit: cover; 
+    transform: translateZ(30px); /* Parallax pop */
+    will-change: transform;
+  }
+  
+  .card-actions { 
+    position: absolute; top: 12px; right: 12px; display: flex; gap: 5px; 
+    opacity: 0; transition: opacity 0.2s ease; z-index: 10; 
+    transform: translateZ(40px); /* Float above image */
+  }
+  .card-tilt-wrapper:hover .card-actions { opacity: 1; }
+  .card-action-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.9); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); backdrop-filter: blur(8px); transition: all 0.15s; }
+  .card-action-btn:hover { background: white; transform: scale(1.1); }
+  .card-action-btn.delete:hover { background: #fef2f2; color: var(--danger); }
+
+  .card-body { padding: 16px; transform: translateZ(20px); /* Subtle text pop */ will-change: transform; }
   .card-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-url { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-url { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
   .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .card-meta { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); padding-top: 12px; border-top: 1px solid var(--border); margin-top: 12px; }
   .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--surface-2); }
+  
+  /* Tooltip */
+  .card-tooltip {
+    position: absolute;
+    left: 0; top: 0;
+    pointer-events: none;
+    background: rgba(26, 31, 54, 0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+    will-change: transform, opacity;
+    z-index: 50;
+    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .card-tooltip::after {
+    content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%) rotate(45deg);
+    width: 8px; height: 8px; background: rgba(26, 31, 54, 0.95);
+    border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
   .empty { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+  
   .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity .2s ease; padding: 20px; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
   .modal { background: white; border-radius: 18px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform .25s ease; }
@@ -90,8 +161,8 @@
       <div class="logo-icon">🔗</div>
       <div><div class="logo-text">Link Organizer</div><div class="logo-sub">Your personal library</div></div>
     </div>
-    <div class="sync-status" id="syncStatus">
-      <div class="sync-dot" id="syncDot"></div><span id="syncText">Auto-sync active</span>
+    <div class="sync-status">
+      <div class="sync-dot"></div><span>Auto-sync active</span>
     </div>
     <div class="section-title">Categories</div>
     <ul class="filter-list" id="categoryList"></ul>
@@ -158,7 +229,6 @@
 
 <script>
 // ============ AUTO SYNC CONFIGURATION ============
-// Your Google Sheet URL is hardcoded here. It will sync automatically in the background.
 const AUTO_SYNC_URL = "https://script.google.com/macros/s/AKfycbzWVReYfx1sgRvdgevqqm7xCZcOZvsPc88sQhar_kFf6UTlMFiqvNt4lDpJinC6LxH1/exec";
 
 // ============ DATABASE ============
@@ -169,23 +239,21 @@ async function dbPut(link) { const db = await openDB(); return new Promise((reso
 async function dbDelete(id) { const db = await openDB(); return new Promise((resolve, reject) => { const tx = db.transaction(STORE_NAME, 'readwrite'); const req = tx.objectStore(STORE_NAME).delete(id); req.onsuccess = () => resolve(); req.onerror = () => reject(req.error); }); }
 
 // ============ SILENT BACKGROUND SYNC ============
-// This runs invisibly. It doesn't show popups or slow down your app.
 let syncTimeout;
 function triggerBackgroundSync() {
   clearTimeout(syncTimeout);
   syncTimeout = setTimeout(() => {
     dbGetAll().then(links => {
       const data = links.map(l => ({ id: l.id, url: l.url, title: l.title, description: l.description, category: l.category, favorite: l.favorite, date: l.date }));
-      // Fire and forget - we don't wait for the response
       fetch(AUTO_SYNC_URL + '?action=write', { method: 'POST', body: JSON.stringify(data) })
         .then(() => console.log('Background sync successful'))
         .catch(e => console.log('Background sync failed (offline?)', e));
     });
-  }, 1000); // Waits 1 second after you stop typing/clicking to sync
+  }, 1000);
 }
 
 // ============ DATA & HELPERS ============
-const CATEGORIES = { work: { name: 'Work', color: '#6366f1', icon: '💼' }, research: { name: 'Research', color: '#10b981', icon: '' }, shopping: { name: 'Shopping', color: '#f59e0b', icon: '🛍️' }, entertainment: { name: 'Entertainment', color: '#ef4444', icon: '🎬' }, productivity: { name: 'Productivity', color: '#8b5cf6', icon: '⚡' }, social: { name: 'Social', color: '#3b82f6', icon: '💬' }, news: { name: 'News', color: '#ec4899', icon: '📰' }, education: { name: 'Education', color: '#14b8a6', icon: '' }, design: { name: 'Design', color: '#f97316', icon: '🎨' }, finance: { name: 'Finance', color: '#059669', icon: '💰' }, travel: { name: 'Travel', color: '#0ea5e9', icon: '✈️' }, food: { name: 'Food', color: '#dc2626', icon: '🍕' }, health: { name: 'Health', color: '#22c55e', icon: '💊' }, tech: { name: 'Tech', color: '#6366f1', icon: '💻' }, other: { name: 'Other', color: '#6b7280', icon: '🔗' } };
+const CATEGORIES = { work: { name: 'Work', color: '#6366f1', icon: '💼' }, research: { name: 'Research', color: '#10b981', icon: '🔬' }, shopping: { name: 'Shopping', color: '#f59e0b', icon: '🛍️' }, entertainment: { name: 'Entertainment', color: '#ef4444', icon: '🎬' }, productivity: { name: 'Productivity', color: '#8b5cf6', icon: '⚡' }, social: { name: 'Social', color: '#3b82f6', icon: '💬' }, news: { name: 'News', color: '#ec4899', icon: '📰' }, education: { name: 'Education', color: '#14b8a6', icon: '📚' }, design: { name: 'Design', color: '#f97316', icon: '🎨' }, finance: { name: 'Finance', color: '#059669', icon: '💰' }, travel: { name: 'Travel', color: '#0ea5e9', icon: '✈️' }, food: { name: 'Food', color: '#dc2626', icon: '🍕' }, health: { name: 'Health', color: '#22c55e', icon: '💊' }, tech: { name: 'Tech', color: '#6366f1', icon: '💻' }, other: { name: 'Other', color: '#6b7280', icon: '🔗' } };
 const DOMAIN_RULES = [ { keys: ['github','gitlab','stackoverflow','vercel','netlify','jira'], cat: 'work', desc: 'Development platform' }, { keys: ['youtube','netflix','spotify','twitch'], cat: 'entertainment', desc: 'Entertainment platform' }, { keys: ['notion','trello','todoist'], cat: 'productivity', desc: 'Productivity tool' }, { keys: ['twitter','facebook','instagram','linkedin','reddit'], cat: 'social', desc: 'Social media' }, { keys: ['amazon','ebay','etsy'], cat: 'shopping', desc: 'Shopping site' } ];
 const KNOWN_TITLES = { 'github.com': 'GitHub', 'medium.com': 'Medium', 'amazon.com': 'Amazon', 'youtube.com': 'YouTube', 'notion.so': 'Notion', 'twitter.com': 'Twitter', 'reddit.com': 'Reddit', 'linkedin.com': 'LinkedIn', 'netflix.com': 'Netflix', 'spotify.com': 'Spotify' };
 
@@ -202,6 +270,90 @@ function autoDetect(url) {
 }
 function getScreenshot(url) { return 'https://image.thum.io/get/width/800/crop/500/noanimate/' + encodeURIComponent(url); }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ============ TILTED CARD ANIMATION (Vanilla JS Physics) ============
+function initTiltCards() {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    const wrapper = card.querySelector('.card-tilt-wrapper');
+    const tooltip = card.querySelector('.card-tooltip');
+    let bounds;
+    let rotateX = 0, rotateY = 0;
+    let targetRotateX = 0, targetRotateY = 0;
+    let tooltipX = 0, tooltipY = 0;
+    let targetTooltipX = 0, targetTooltipY = 0;
+    let lastY = 0;
+    let tooltipRotate = 0;
+    let isHovering = false;
+    let rafId = null;
+
+    function animate() {
+      // Spring-like linear interpolation (lerp) mimicking Framer Motion spring
+      rotateX += (targetRotateX - rotateX) * 0.15;
+      rotateY += (targetRotateY - rotateY) * 0.15;
+      
+      const scale = isHovering ? 1.05 : 1;
+      wrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+      
+      if (tooltip) {
+        tooltipX += (targetTooltipX - tooltipX) * 0.2;
+        tooltipY += (targetTooltipY - tooltipY) * 0.2;
+        tooltip.style.transform = `translate(${tooltipX}px, ${tooltipY}px) rotate(${tooltipRotate}deg)`;
+      }
+      
+      // Stop animation loop when settled to save CPU
+      if (!isHovering && Math.abs(rotateX) < 0.1 && Math.abs(rotateY) < 0.1) {
+        rotateX = 0; rotateY = 0;
+        wrapper.style.transform = `rotateX(0deg) rotateY(0deg) scale(1)`;
+        return; 
+      }
+      rafId = requestAnimationFrame(animate);
+    }
+
+    card.addEventListener('mouseenter', (e) => {
+      isHovering = true;
+      bounds = card.getBoundingClientRect();
+      if (tooltip) {
+        tooltip.style.opacity = '1';
+        targetTooltipX = e.clientX - bounds.left;
+        targetTooltipY = e.clientY - bounds.top;
+        tooltipX = targetTooltipX;
+        tooltipY = targetTooltipY;
+      }
+      if (!rafId) animate();
+    });
+
+    card.addEventListener('mousemove', (e) => {
+      if (!bounds) bounds = card.getBoundingClientRect();
+      const centerX = bounds.width / 2;
+      const centerY = bounds.height / 2;
+      const offsetX = e.clientX - bounds.left - centerX;
+      const offsetY = e.clientY - bounds.top - centerY;
+      
+      const rotateAmplitude = 12; // Matches React component default
+      targetRotateY = (offsetX / centerX) * rotateAmplitude;
+      targetRotateX = (offsetY / centerY) * -rotateAmplitude;
+      
+      if (tooltip) {
+        const velocityY = offsetY - lastY;
+        tooltipRotate = -velocityY * 0.6; // Matches React component rotateFigcaption
+        lastY = offsetY;
+        targetTooltipX = e.clientX - bounds.left;
+        targetTooltipY = e.clientY - bounds.top;
+      }
+    });
+
+    card.addEventListener('mouseleave', () => {
+      isHovering = false;
+      targetRotateX = 0;
+      targetRotateY = 0;
+      tooltipRotate = 0;
+      if (tooltip) {
+        tooltip.style.opacity = '0';
+      }
+    });
+  });
+}
 
 // ============ IMAGE PASTE FEATURE ============
 const pasteArea = document.getElementById('pasteArea');
@@ -259,29 +411,36 @@ function renderGrid() {
   const titleEl = document.getElementById('viewTitle'); const subEl = document.getElementById('viewSub');
   if (currentFilter.type === 'all') { titleEl.textContent = 'All Links'; subEl.textContent = links.length + ' saved links'; }
   else if (currentFilter.type === 'category') { titleEl.textContent = CATEGORIES[currentFilter.value].icon + ' ' + CATEGORIES[currentFilter.value].name; subEl.textContent = filtered.length + ' links'; }
-  else if (currentFilter.type === 'recent') { titleEl.textContent = ' Recently Added'; subEl.textContent = 'Last 7 days'; }
+  else if (currentFilter.type === 'recent') { titleEl.textContent = '🕐 Recently Added'; subEl.textContent = 'Last 7 days'; }
   else if (currentFilter.type === 'favorites') { titleEl.textContent = '⭐ Favorites'; subEl.textContent = filtered.length + ' links'; }
   
-  if (filtered.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div style="font-size:48px;margin-bottom:16px;"></div><h3>No links yet</h3><p>Paste a link or screenshot above to get started!</p></div>'; return; }
+  if (filtered.length === 0) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div style="font-size:48px;margin-bottom:16px;">📭</div><h3>No links yet</h3><p>Paste a link or screenshot above to get started!</p></div>'; return; }
   
   grid.innerHTML = filtered.map((l, i) => {
     const cat = CATEGORIES[l.category] || CATEGORIES.other; const domain = extractDomain(l.url);
     const screenshot = l.preview || getScreenshot(l.url);
-    return '<div class="card" data-id="' + l.id + '" style="animation-delay:' + (i * 40) + 'ms;">' +
-      '<div class="card-actions">' +
-        '<button class="card-action-btn" data-action="fav" style="color:' + (l.favorite ? '#f59e0b' : 'inherit') + '">⭐</button>' +
-        '<button class="card-action-btn" data-action="copy"></button>' +
-        '<button class="card-action-btn" data-action="open">↗</button>' +
-        '<button class="card-action-btn delete" data-action="delete">🗑</button>' +
-      '</div>' +
-      '<div class="card-preview"><img src="' + screenshot + '" alt="' + escapeHtml(l.title) + '" loading="lazy" onerror="this.src=\'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'500\'><rect width=\'800\' height=\'500\' fill=\'' + cat.color + '\'/><text x=\'400\' y=\'280\' text-anchor=\'middle\' font-size=\'64\' fill=\'white\'>' + cat.icon + '</text></svg>\';"/></div>' +
-      '<div class="card-body">' +
-        '<div class="card-title">' + escapeHtml(l.title) + '</div>' +
-        '<div class="card-url">🌐 ' + escapeHtml(domain) + '</div>' +
-        '<div class="card-desc">' + escapeHtml(l.description) + '</div>' +
-        '<div class="card-meta"><span class="badge"><span class="cat-dot" style="background:' + cat.color + '"></span>' + cat.name + '</span><span>' + new Date(l.date).toLocaleDateString() + '</span></div>' +
-      '</div></div>';
+    return `<div class="card" data-id="${l.id}" style="animation-delay:${i * 40}ms;">
+      <div class="card-tilt-wrapper">
+        <div class="card-tooltip">${escapeHtml(l.title)}</div>
+        <div class="card-actions">
+          <button class="card-action-btn" data-action="fav" style="color:${l.favorite ? '#f59e0b' : 'inherit'}">⭐</button>
+          <button class="card-action-btn" data-action="copy">📋</button>
+          <button class="card-action-btn" data-action="open">↗</button>
+          <button class="card-action-btn delete" data-action="delete">🗑</button>
+        </div>
+        <div class="card-preview"><img src="${screenshot}" alt="${escapeHtml(l.title)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'500\'><rect width=\'800\' height=\'500\' fill=\'${cat.color}\'/><text x=\'400\' y=\'280\' text-anchor=\'middle\' font-size=\'64\' fill=\'white\'>${cat.icon}</text></svg>';" /></div>
+        <div class="card-body">
+          <div class="card-title">${escapeHtml(l.title)}</div>
+          <div class="card-url">🌐 ${escapeHtml(domain)}</div>
+          <div class="card-desc">${escapeHtml(l.description)}</div>
+          <div class="card-meta"><span class="badge"><span class="cat-dot" style="background:${cat.color}"></span>${cat.name}</span><span>${new Date(l.date).toLocaleDateString()}</span></div>
+        </div>
+      </div>
+    </div>`;
   }).join('');
+  
+  // Re-initialize tilt physics on new DOM elements
+  initTiltCards();
   
   grid.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', (e) => {
@@ -411,12 +570,11 @@ function showToast(msg, type = 'success') {
   toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// ============ INIT (Starts automatically) ============
+// ============ INIT ============
 (async () => {
   try { 
     links = await dbGetAll(); 
     render(); 
-    // Trigger a silent sync in the background to backup any new local links
     triggerBackgroundSync(); 
   } catch (e) { console.error(e); render(); }
 })();
